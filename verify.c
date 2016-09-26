@@ -1,5 +1,8 @@
 #include "common.h"
 
+//bitmap record every line and row's rest number
+unsigned int bitmap_per_num[10][10] = {0};
+
 int verify_correction(char *input){
     unsigned int bitmap[2] = {0};
     int i = 0;
@@ -85,6 +88,7 @@ int verify_correction(char *input){
             perror("verify failed!\n");
             return -ERRFAIL;
         }
+        memset(bitmap, 0, 2);
     }
     printf("Verify Successfully!\n");
     return 0;

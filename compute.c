@@ -1,5 +1,7 @@
 #include "common.h"
 
+
+
 //compute the cells the number belongs to, cells number from 1 ~ 9
 /*       cell 1(0,0)    cell 2(1,0)    cell 3(2,0)
          0    0    0    0    0    0    0    0    0

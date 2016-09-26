@@ -28,6 +28,5 @@ char *get_input(void);
 //convert one dimension array to two dimension array
 int convert_input(char *input, int length, char (* matrix)[][SIDE_LENGTH]);
 
-//bitmap record every line and row's rest number
-unsigned int bitmap_per_num[10][10] = {0};
+extern unsigned int bitmap_per_num[10][10];
 #endif
