@@ -1,26 +1,23 @@
 CC=gcc
 CFLAG=-g -c
-LDFLAGS=
+LDFLAGS=`pkg-config --cflags --libs gtk+-2.0`
 SOURCES=$(foreach d,.,$(wildcard $(addprefix ./*,.c)))
-#HEADERS=$(foreach d,.,$(wildcard $(addprefix ./*,.h)))
+HEADERS=$(foreach d,.,$(wildcard $(addprefix ./*,.h)))
 OBJS=$(addsuffix .o, $(basename $(SOURCES)))
-#OBJS=*.o
-#BIN=$(patsubst %.c,%,$(wildcard *.c))
+BIN=$(patsubst %.c,%,$(wildcard *.c))
 
-.PHONY:all 
+.PHONY: all
 
-all:$(OBJS) 
-	$(CC) $(LDFLAGS) $^ -o main
+all:$(OBJS)
+#	$(CC) $(LDFLAGS) $< 
+	for i in `echo $(BIN)|cut -d' ' -f 1-`;\
+	do\
+		echo $$i;\
+		$(CC) $(LDFLAGS) $$i.o -o $$i;\
+	done
 
-.c.o: 
+%.o:%.c 
 	$(CC) $(CFLAG) $(LDFLAGS) $< -o $@
 
-tags:
-	ctags -R 
-
-cscope:
-	cscope -Rbq
-
-
 clean:
-	rm -rf *.o a.out $(BIN) tags cscope.*
+	rm -rf *.o a.out $(BIN)
