@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <gtk/gtk.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
+#include <error.h>
 
 #define BUTTON_NEW_INTIALIZE(n) n = gtk_button_new_with_label ("press me")
 #define BUTTON_NEW_INTIALIZE_RANGE(button_array, n, m) do{\
@@ -12,7 +18,13 @@
 										BUTTON_NEW_INTIALIZE(button_array[i]);\
 									}\
 								}while(0)
+#define printerror() printf("%s\n", strerror(errno));
 #define ROOT_MENU_COUNT 2
+
+
+int fd;
+int stopped = 0;
+
 static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3]);
 static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3]);
 static void menuitem_response (gchar *);
@@ -49,6 +61,11 @@ int main( int   argc,
     int order = 0;
 
     gtk_init (&argc, &argv);
+
+    if((fd = open("foo", O_WRONLY)) == -1){
+        printerror();
+        exit(EXIT_FAILURE);
+    }
 
     /* create a new window */
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -247,6 +264,9 @@ static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
     FILE *fp = NULL;
     int i,j,k,l;
     const gchar *str;
+    char s[100];
+    GtkWidget *dialog;
+
     if((fp = fopen("matrix.txt", "w")) == NULL){
         exit(1);        
     }
@@ -269,6 +289,23 @@ static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
         }
     fclose(fp);
     system("./main");
+    read(fd, s, sizeof(s));
+    if(stopped == 0){
+        dialog = gtk_message_dialog_new(GTK_WINDOW (window),
+                                        GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                        GTK_MESSAGE_INFO,
+                                        GTK_BUTTONS_OK,
+                                        "no extra answer!\n");
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+        return FALSE;
+    }
+    if(strncmp(s, "continue", 8) == 0){
+        return TRUE;
+    }
+    else if(strncmp(s, "stop", 4) == 0){
+        
+    }
     //	if (event->type == GDK_BUTTON_PRESS) {
 //		GdkEventButton *bevent = (GdkEventButton *) event; 
 //		gtk_menu_popup (GTK_MENU (widget), NULL, NULL, NULL, NULL,
@@ -285,6 +322,8 @@ static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
     FILE *fp = NULL;
     int i,j,k,l;
     gchar ch;
+    GtkWidget *dialog;
+
     if((fp = fopen("result.txt", "r")) == NULL){
         exit(1);        
     }

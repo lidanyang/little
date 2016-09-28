@@ -1,5 +1,5 @@
 CC=gcc
-CFLAG=-g -c
+CFLAG=-g -c -Wall
 LDFLAGS=`pkg-config --cflags --libs gtk+-2.0`
 SOURCES=$(foreach d,.,$(wildcard $(addprefix ./*,.c)))
 HEADERS=$(foreach d,.,$(wildcard $(addprefix ./*,.h)))

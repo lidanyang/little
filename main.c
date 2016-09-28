@@ -1,12 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <error.h>
 
-static const char *optString = "an";
-int map[9][9];
-FILE *fp_result;
+
+int fd;
 int countall = 0;
 int stepbysetp = 0;
+int map[9][9];
+static  const char *optString = "an";
+FILE *fp_result;
+
+#define FILENAME foo
+#define printerror() printf("%s\n", strerror(errno));
 
 void print_map(FILE *fp){
     int i, j;
@@ -60,11 +72,18 @@ int answer = 0;
 
 void walk(int count){
     int i, j, k;
+    char s[] = "continue";
     if(81 == count){
         if(stepbysetp) {
             if((fp_result = fopen("result.txt", "w")) == NULL){
+                printerror();
                 exit(EXIT_FAILURE);
             }
+            if((fd = open("foo", O_RDONLY)) == -1){
+                printerror();
+                exit(EXIT_FAILURE);
+            }
+            write(fd, s, sizeof(s));
             print_map(fp_result);
             print_map(stdout);
             getchar();    
@@ -93,11 +112,17 @@ void walk(int count){
 }
 
 
-int main(int argc, const char *argv[])
+int main(int argc, char * const argv[])
 {
     int i,j;
     FILE *fp_data; 
     int opt = 0;
+    unlink("foo");
+    int ret = mkfifo("foo", 0777);
+    if(ret){
+
+        exit(EXIT_FAILURE);
+    }
     opt = getopt(argc, argv, optString);
     while(opt != -1){
         switch(opt){
