@@ -35,8 +35,8 @@ int main( int   argc,
           char *argv[] )
 {
     GtkWidget *menu[ROOT_MENU_COUNT];
-    GtkWidget *menu_bar;
-    GtkWidget *menu_bar_2;
+    //GtkWidget *menu_bar;
+    //GtkWidget *menu_bar_2;
     GtkWidget *root_menu[ROOT_MENU_COUNT];
     GtkWidget *menu_items;
     GtkWidget *menu_items_;
@@ -276,7 +276,7 @@ static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
             for(k = 0 ; k < 3; k++){
                 for(l = 0 ; l < 3; l++){
                     str = gtk_entry_buffer_get_text((*buffer)[i][k][j][l]);
-                    g_printf("%c ", str[0]);
+                    //g_printf("%c ", str[0]);
                     if(str[0] > '9' || str[0] < '0'){
                         fputc('.', fp);
                     }
@@ -322,7 +322,7 @@ static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
     FILE *fp = NULL;
     int i,j,k,l;
     gchar ch;
-    GtkWidget *dialog;
+    //GtkWidget *dialog;
 
     if((fp = fopen("result.txt", "r")) == NULL){
         exit(1);        
