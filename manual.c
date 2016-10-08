@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -24,12 +25,23 @@
 
 int fd;
 int stopped = 0;
+int answer = 0;
 
+int pid;
+int status;
+gint context_id;
 static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3]);
 static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3]);
 static void menuitem_response (gchar *);
 static void menuitem_response_1 (gchar *message, GtkWidget *);
 GtkWidget *window;
+GtkWidget *statusbar;
+static void main_quit(void){
+    printf("\n%d\n", pid);
+    kill(pid, SIGKILL);
+    gtk_main_quit();
+}
+
 
 int main( int   argc,
           char *argv[] )
@@ -55,24 +67,21 @@ int main( int   argc,
     GtkWidget *hbuttonbox;
     GtkEntryBuffer *buffer[3][3][3][3];
 	GSList *group = NULL;
+    
 	//GtkWidget *item;
     char buf[128];
     int i,j,k,l;
     int order = 0;
 
     gtk_init (&argc, &argv);
-
-    if((fd = open("foo", O_WRONLY)) == -1){
-        printerror();
-        exit(EXIT_FAILURE);
-    }
+    printf("%s(%d)\n", __func__, __LINE__);
 
     /* create a new window */
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_widget_set_size_request (GTK_WIDGET (window), 590, 600);
+    gtk_widget_set_size_request (GTK_WIDGET (window), 560, 600);
     gtk_window_set_title (GTK_WINDOW (window), "GTK Menu Test");
     g_signal_connect (window, "delete-event",
-                      G_CALLBACK (gtk_main_quit), NULL);
+                      G_CALLBACK (main_quit), NULL);
 
     hbuttonbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
@@ -97,36 +106,37 @@ int main( int   argc,
     for (i = 0; i < 4; i++){
 			/* Copy the names to the buf. */
 			sprintf (buf, "Test-undermenu - %d", i);
+            //printf (buf, "Test-undermenu - %d", i);
 
-			/* Create a new menu-item with a name... */
-			//menu_items = gtk_menu_item_new_with_label (buf);
+            /* Create a new menu-item with a name... */
+            //menu_items = gtk_menu_item_new_with_label (buf);
 
-			menu_items = gtk_radio_menu_item_new_with_label (group, "This is an example");
-			group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menu_items));
-			/* ...and add it to the menu. */
-			gtk_menu_shell_append (GTK_MENU_SHELL (menu[0]), menu_items);
+            menu_items = gtk_radio_menu_item_new_with_label (group, "This is an example");
+            group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menu_items));
+            /* ...and add it to the menu. */
+            gtk_menu_shell_append (GTK_MENU_SHELL (menu[0]), menu_items);
 
-			/* Do something interesting when the menuitem is selected */
-			g_signal_connect_swapped (menu_items, "toggled",
-					G_CALLBACK (menuitem_response_1), 
-					(gpointer) g_strdup (buf));
-			
+            /* Do something interesting when the menuitem is selected */
+            g_signal_connect_swapped (menu_items, "toggled",
+                    G_CALLBACK (menuitem_response_1), 
+                    (gpointer) g_strdup (buf));
+
             /* Show the widget */
             gtk_widget_show (menu_items);
 
-		}
-	for(i = 0; i < 4; i++){
-			menu_items_ = gtk_menu_item_new_with_label (buf);
-			/* ...and add it to the menu. */
-			gtk_menu_shell_append (GTK_MENU_SHELL (menu[1]), menu_items_);
+    }
+    for(i = 0; i < 4; i++){
+        menu_items_ = gtk_menu_item_new_with_label (buf);
+        /* ...and add it to the menu. */
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu[1]), menu_items_);
 
-			/* Do something interesting when the menuitem is selected */
-			g_signal_connect_swapped (menu_items_, "activate",
-					G_CALLBACK (menuitem_response), 
-					(gpointer) g_strdup (buf));
-            /* Show the widget */
-            gtk_widget_show (menu_items_);
-	}
+        /* Do something interesting when the menuitem is selected */
+        g_signal_connect_swapped (menu_items_, "activate",
+                G_CALLBACK (menuitem_response), 
+                (gpointer) g_strdup (buf));
+        /* Show the widget */
+        gtk_widget_show (menu_items_);
+    }
 
     /* This is the root menu, and will be the label
      * displayed on the menu bar.  There won't be a signal handler attached,
@@ -143,44 +153,44 @@ int main( int   argc,
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (root_menu[1]), menu[1]);
 
     /* A vbox to put a menu and a button in: */
-//    vbox = gtk_vbox_new (FALSE, 0);
-    
+    //    vbox = gtk_vbox_new (FALSE, 0);
+
     vbox = gtk_vbox_new (FALSE, 0);
     gtk_container_add(GTK_CONTAINER (window), vbox);
 
     /* Create a menu-bar to hold the menus and add it to our main window */
-//
-//    menu_bar = gtk_menu_bar_new ();
-//    gtk_box_pack_start (GTK_BOX (vbox), menu_bar, FALSE, FALSE, 2);
-//	//gtk_box_reorder_child(GTK_BOX (vbox), menu_bar , order++);
-//    gtk_widget_show (menu_bar);
-//
-//    //menu_bar_2 = gtk_menu_bar_new ();
-//    //gtk_box_pack_start (GTK_BOX (vbox), menu_bar_2, FALSE, FALSE, 2);
-//	////gtk_box_reorder_child(GTK_BOX (vbox), menu_bar_2 , 5);
-//    //gtk_widget_show (me)u_bar_2);
-//
-//    /* Create a button to which to attach menu as a popup */
-//	BUTTON_NEW_INTIALIZE_RANGE(button, 0, 3);
-//	for(i = 0; i <= 3; i++){
-//		g_signal_connect_swapped (button[i], "event",
-//				G_CALLBACK (button_press), 
-//				menu[0]);
-//		gtk_box_pack_start (GTK_BOX (vbox), button[i], FALSE, TRUE, 2);
-//		//gtk_box_reorder_child(GTK_BOX (vbox), button[i] , order++);
-//		gtk_widget_show (button[i]);
-//	}
-//
-//    gtk_box_pack_start (GTK_BOX (vbox_1), vbox, TRUE, TRUE, 0);
-//    //gtk_box_reorder_child(GTK_BOX (vbox_1), vbox , order++);
-//	
-//	/* And finally we append the menu-item to the menu-bar -- this is the
-//	 * "root" menu-item I have been raving about =) */
-//	for(i = 0; i < 2; i++){
-//		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu[i]);
-//	}
-//
-//
+    //
+    //    menu_bar = gtk_menu_bar_new ();
+    //    gtk_box_pack_start (GTK_BOX (vbox), menu_bar, FALSE, FALSE, 2);
+    //	//gtk_box_reorder_child(GTK_BOX (vbox), menu_bar , order++);
+    //    gtk_widget_show (menu_bar);
+    //
+    //    //menu_bar_2 = gtk_menu_bar_new ();
+    //    //gtk_box_pack_start (GTK_BOX (vbox), menu_bar_2, FALSE, FALSE, 2);
+    //	////gtk_box_reorder_child(GTK_BOX (vbox), menu_bar_2 , 5);
+    //    //gtk_widget_show (me)u_bar_2);
+    //
+    //    /* Create a button to which to attach menu as a popup */
+    //	BUTTON_NEW_INTIALIZE_RANGE(button, 0, 3);
+    //	for(i = 0; i <= 3; i++){
+    //		g_signal_connect_swapped (button[i], "event",
+    //				G_CALLBACK (button_press), 
+    //				menu[0]);
+    //		gtk_box_pack_start (GTK_BOX (vbox), button[i], FALSE, TRUE, 2);
+    //		//gtk_box_reorder_child(GTK_BOX (vbox), button[i] , order++);
+    //		gtk_widget_show (button[i]);
+    //	}
+    //
+    //    gtk_box_pack_start (GTK_BOX (vbox_1), vbox, TRUE, TRUE, 0);
+    //    //gtk_box_reorder_child(GTK_BOX (vbox_1), vbox , order++);
+    //	
+    //	/* And finally we append the menu-item to the menu-bar -- this is the
+    //	 * "root" menu-item I have been raving about =) */
+    //	for(i = 0; i < 2; i++){
+    //		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), root_menu[i]);
+    //	}
+    //
+    //
 
     order = 0;
     for (i = 0 ; i < 3; i++)
@@ -230,9 +240,15 @@ int main( int   argc,
             }
         }
     }
+    printf("%s(%d)", __func__, __LINE__);
     gtk_box_pack_start(GTK_BOX (vbox), hbuttonbox, TRUE, TRUE , 0);
-//    gtk_widget_set_size_request(button, 20, 20);
-
+    //    gtk_widget_set_size_request(button, 20, 20);
+    printf("%s(%d)", __func__, __LINE__);
+    statusbar = gtk_statusbar_new ();
+    gtk_box_pack_start(GTK_BOX (vbox), statusbar, TRUE, TRUE , 0);
+    gtk_widget_show(statusbar);
+    context_id = gtk_statusbar_get_context_id(
+            GTK_STATUSBAR (statusbar), "prepare to analysize!");
 
     g_signal_connect (G_OBJECT(button[0]), "clicked",
             G_CALLBACK (button_0_press), 
@@ -244,32 +260,50 @@ int main( int   argc,
             (gpointer)&buffer);
     gtk_button_set_label (GTK_BUTTON (button[1]), "press me to see next!");
 
-	/* always display the window as the last step so it all splashes on
-	 * the screen at once. */
-	gtk_widget_show_all (window);
+    /* always display the window as the last step so it all splashes on
+     * the screen at once. */
+    gtk_widget_show_all (window);
 
-	gtk_main ();
+    char *argv_[] = {"./main", "-n", NULL};
+    char *envp_[] = {NULL};
+    if((pid = fork()) == 0){
+        execve("./main", argv_, envp_);
+    }
+    printf("%d\n", pid);
+    gtk_main ();
 
-	return 0;
+
+    wait(&status);
+
+    return 0;
 }
 
-/* Respond to a button-press by posting a menu passed in as widget.
- *
- * Note that the "widget" argument is the menu being posted, NOT
- * the button that was pressed.
- */
-
+//start analysize
 static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3])
 {
     FILE *fp = NULL;
-    int i,j,k,l;
+    int i,j,k,l,fd;
     const gchar *str;
     char s[100];
     GtkWidget *dialog;
+    answer = 0;
+    if(pid)
+    {
+        kill(pid, SIGKILL);
+        printf("killed pid = %d\n", pid);
+    }
+    char *argv_[] = {"./main", "-n", NULL};
+    char *envp_[] = {NULL};
+    if((pid = fork()) == 0){
+        execve("./main", argv_, envp_);
+    }
+    kill(pid, SIGCONT);
+    printf("%d\n", pid);
 
     if((fp = fopen("matrix.txt", "w")) == NULL){
         exit(1);        
     }
+
     fseek(fp, 0, SEEK_SET);
     for(i = 0 ; i < 3; i++)
         for(j = 0 ; j < 3; j++){
@@ -288,45 +322,40 @@ static gboolean button_0_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
             fputc('\n', fp);
         }
     fclose(fp);
-    system("./main");
-    read(fd, s, sizeof(s));
-    if(stopped == 0){
-        dialog = gtk_message_dialog_new(GTK_WINDOW (window),
-                                        GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                        GTK_MESSAGE_INFO,
-                                        GTK_BUTTONS_OK,
-                                        "no extra answer!\n");
-        gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
-        return FALSE;
-    }
-    if(strncmp(s, "continue", 8) == 0){
-        return TRUE;
-    }
-    else if(strncmp(s, "stop", 4) == 0){
-        
-    }
-    //	if (event->type == GDK_BUTTON_PRESS) {
-//		GdkEventButton *bevent = (GdkEventButton *) event; 
-//		gtk_menu_popup (GTK_MENU (widget), NULL, NULL, NULL, NULL,
-//				bevent->button, bevent->time);
-//		/* Tell calling code that we have handled this event; the buck
-//		 * stops here. */
-//		return TRUE;
 
-	/* Tell calling code that we have not handled this event; pass it on. */
-	return TRUE;
+//    dialog = gtk_message_dialog_new(GTK_WINDOW (window),
+//            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+//            GTK_MESSAGE_INFO,
+//            GTK_BUTTONS_OK,
+//            "no extra answer!\n");
+//    gtk_dialog_run (GTK_DIALOG (dialog));
+//    gtk_widget_destroy (dialog);
+    //	if (event->type == GDK_BUTTON_PRESS) {
+    //		GdkEventButton *bevent = (GdkEventButton *) event; 
+    //		gtk_menu_popup (GTK_MENU (widget), NULL, NULL, NULL, NULL,
+    //				bevent->button, bevent->time);
+    //		/* Tell calling code that we have handled this event; the buck
+    //		 * stops here. */
+    //		return TRUE;
+
+ 
+    button_1_press(button, buffer);
+    /* Tell calling code that we have not handled this event; pass it on. */
+    return TRUE;
 }
 
 static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3][3][3]){
     FILE *fp = NULL;
     int i,j,k,l;
     gchar ch;
+    gchar *buff;
     //GtkWidget *dialog;
 
     if((fp = fopen("result.txt", "r")) == NULL){
         exit(1);        
     }
+
+    kill(pid, SIGCONT);
     fseek(fp, 0, SEEK_SET);
     for(i = 0 ; i < 3; i++)
         for(j = 0 ; j < 3; j++){
@@ -334,7 +363,7 @@ static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
                 for(l = 0 ; l < 3; l++){
                     ch = fgetc(fp);
                     if(ch > '9' || ch < '0'){
-                        printf("failure!\n");
+                        printf("failure! ch = %c\n", ch);
                         return FALSE;
                     }
                     else{
@@ -345,6 +374,10 @@ static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
             fgetc(fp);
         }
     fclose(fp);
+    buff = g_strdup_printf("第 %d 个答案!", answer++);
+    gtk_statusbar_push (GTK_STATUSBAR (statusbar), context_id, buff);
+    g_free(buff);
+    
     //fputc(' ', stdin);
     return TRUE;
 }
@@ -353,32 +386,32 @@ static gboolean button_1_press(GtkWidget *button, GtkEntryBuffer* (*buffer)[][3]
 
 static void menuitem_response(gchar *message)
 {
-	GtkWidget *dialog, *label, *content_area;
+    GtkWidget *dialog, *label, *content_area;
 
-	printf("%s\n", __func__);
-	/* Create the widgets */
-	dialog = gtk_dialog_new_with_buttons ("Message",
-			GTK_WINDOW (window),
-			GTK_DIALOG_DESTROY_WITH_PARENT,
-			GTK_STOCK_OK,
-			GTK_RESPONSE_NONE,
-			NULL);
-	content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
-	label = gtk_label_new (message);
-	/* Ensure that the dialog box is destroyed when the user responds. */
-	g_signal_connect_swapped (dialog,
-			"response",
-			G_CALLBACK (gtk_widget_destroy),
-			dialog);
-	/* Add the label, and show:w everything we've added to the dialog. */
-	gtk_container_add (GTK_CONTAINER (content_area), label);
-	gtk_widget_show_all (dialog);
+    printf("%s\n", __func__);
+    /* Create the widgets */
+    dialog = gtk_dialog_new_with_buttons ("Message",
+            GTK_WINDOW (window),
+            GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_STOCK_OK,
+            GTK_RESPONSE_NONE,
+            NULL);
+    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+    label = gtk_label_new (message);
+    /* Ensure that the dialog box is destroyed when the user responds. */
+    g_signal_connect_swapped (dialog,
+            "response",
+            G_CALLBACK (gtk_widget_destroy),
+            dialog);
+    /* Add the label, and show:w everything we've added to the dialog. */
+    gtk_container_add (GTK_CONTAINER (content_area), label);
+    gtk_widget_show_all (dialog);
 }
 
 static void menuitem_response_1(gchar *message, GtkWidget *widget)
 {
-	if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (widget))){
-		printf("%s\n", __func__);
-		menuitem_response(message);
-	}
+    if(gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (widget))){
+        printf("%s\n", __func__);
+        menuitem_response(message);
+    }
 }

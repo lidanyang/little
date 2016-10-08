@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,7 +23,6 @@ FILE *fp_result;
 
 void print_map(FILE *fp){
     int i, j;
-    printf("%s", __func__);
     for(i = 0; i < 9; i++){//y
         fprintf(fp, "+-----------------------------------+\n");
         fprintf(fp, "| ");
@@ -33,6 +33,18 @@ void print_map(FILE *fp){
     }
     fprintf(fp, "+-----------------------------------+\n");
 }
+
+void print_map_num(FILE *fp){
+    int i, j;
+    for(i = 0; i < 9; i++){//y
+        for(j = 0; j < 9; j++){//x
+            fprintf(fp, "%d", map[i][j]);
+        }
+        fprintf(fp, "\n");
+    }
+}
+
+
 
 
 int verify(int x, int y){
@@ -79,15 +91,12 @@ void walk(int count){
                 printerror();
                 exit(EXIT_FAILURE);
             }
-            if((fd = open("foo", O_RDONLY)) == -1){
-                printerror();
-                exit(EXIT_FAILURE);
-            }
-            write(fd, s, sizeof(s));
-            print_map(fp_result);
+            print_map_num(fp_result);
             print_map(stdout);
-            getchar();    
             fclose(fp_result);
+            answer++;
+            printf("nihao!\n");
+            kill(getpid(), SIGSTOP);
         }
         else if(countall){
             answer++;
@@ -97,13 +106,13 @@ void walk(int count){
     j = count % 9;
     i = count / 9;
     if(map[i][j] == 0){
-       for(k = 1; k <= 9 ;k++ ){
-           map[i][j] = k;
-           if(!verify(i, j)){
-               walk(count + 1);
-           }
-       }    
-       map[i][j] = 0;
+        for(k = 1; k <= 9 ;k++ ){
+            map[i][j] = k;
+            if(!verify(i, j)){
+                walk(count + 1);
+            }
+        }    
+        map[i][j] = 0;
     }
     else{
         walk(count + 1);
@@ -117,12 +126,6 @@ int main(int argc, char * const argv[])
     int i,j;
     FILE *fp_data; 
     int opt = 0;
-    unlink("foo");
-    int ret = mkfifo("foo", 0777);
-    if(ret){
-
-        exit(EXIT_FAILURE);
-    }
     opt = getopt(argc, argv, optString);
     while(opt != -1){
         switch(opt){
@@ -137,10 +140,12 @@ int main(int argc, char * const argv[])
         }
         opt = getopt(argc, argv, optString);
     }
+    kill(getpid(), SIGSTOP);
     if((fp_data = fopen("data", "w+")) == NULL){
         return EXIT_FAILURE; 
     }
-
+    
+    //fgetc(fp_data);
     for(i = 0; i < 9 ;i++){
         for(j = 0;j < 9 ;j++){
             map[i][j] = 0;
@@ -152,7 +157,7 @@ int main(int argc, char * const argv[])
         for (j = 0; j < 9; j++)
         {
             fscanf(fp, "%c", &c);
-    //        putchar(c);
+            //        putchar(c);
             if(c == '.'){
                 continue;
             }
